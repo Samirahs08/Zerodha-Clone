@@ -49,6 +49,7 @@ Then update the values in `backend/.env`:
 ```env
 PORT=5600
 MONGO_URL=mongodb://localhost:27017/your_database_name
+JWT_SECRET=your_jwt_secret_key
 ```
 
 ## Install Dependencies
@@ -70,7 +71,61 @@ This uses nodemon for development, which auto-restarts on file changes.
 ## API Endpoints
 All endpoints are prefixed with `/zerodha`.
 
-### GET /zerodha/allHoldings
+### Authentication
+
+#### POST /zerodha/signup
+Creates a new user account.
+
+**Request Body:**
+```json
+{
+  "username": "string (min 4 characters)",
+  "email": "string (valid email)",
+  "password": "string (6-12 characters, must include uppercase, lowercase, number, and special character)"
+}
+```
+
+**Response:**
+```json
+{
+  "data": { ...user object... },
+  "message": "congratulation {username} ! signup successfull.",
+  "success": true
+}
+```
+
+**Notes:**
+- Sets an HTTP-only cookie named `AccessToken` for authentication.
+- Returns 401 if user already exists.
+
+#### POST /zerodha/login
+Logs in an existing user.
+
+**Request Body:**
+```json
+{
+  "identifier": "string (email or username)",
+  "password": "string (same requirements as signup)"
+}
+```
+
+**Response:**
+```json
+{
+  "data": { ...user object... },
+  "message": "{identifier} login successfully",
+  "success": true
+}
+```
+
+**Notes:**
+- Identifier can be either email or username.
+- Sets an HTTP-only cookie named `AccessToken` for authentication.
+- Returns 404 for invalid credentials.
+
+### Data Endpoints
+
+#### GET /zerodha/allHoldings
 Fetches all holdings data from the database.
 
 **Response:**
@@ -136,13 +191,17 @@ Creates a new order.
 - **mongoose:** MongoDB ODM
 - **cors:** Cross-origin resource sharing
 - **dotenv:** Environment variable loading
-- **passport & passport-local:** Authentication (not currently used in routes)
+- **jsonwebtoken:** JWT token generation for authentication
+- **bcrypt:** Password hashing
+- **express-validator:** Request validation
+- **validator:** Additional validation utilities
 - **nodemon:** Development auto-restart
 
 ## Notes
 - The backend uses ES modules (`type: "module"` in package.json).
 - Server starts on `PORT` from .env or defaults to 5600.
 - Database connection uses `MONGO_URL` from .env.
+- Authentication uses JWT tokens stored in HTTP-only cookies.
 - Error responses include status code, message, and success flag.
 
 ## Dummy Data Examples
